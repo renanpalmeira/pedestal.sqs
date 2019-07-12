@@ -67,6 +67,8 @@
               ;; ::http/interceptors []
               ::http/routes            routes
 
+
+              ;; read more in https://github.com/cognitect-labs/aws-api
               ::sqs/client             {:region            "us-east-1"
                                         :endpoint-override {:protocol :http
                                                             :hostname "localhost"
@@ -74,7 +76,7 @@
 
               ::sqs/configurations     {:auto-create-queue? true}
 
-              ;; queue-name   listener function   queue/listener configurations
+              ;; queue-name   listener function   queue/listener configurations (here a shortcut to (aws/doc :ReceiveMessage))
               ::sqs/listeners          #{["foo-queue" foo-listener {:WaitTimeSeconds 20}]
                                          ["bar-queue" bar-listener]
                                          ["egg-queue" egg-listener {:WaitTimeSeconds 10}]}
