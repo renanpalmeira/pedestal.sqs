@@ -54,7 +54,8 @@
         sqs-configurations (::sqs/configurations service-map {})
         listeners (::sqs/listeners service-map)]
 
-    ;; reference in https://github.com/spring-cloud/spring-cloud-aws/blob/v2.0.0.M4/spring-cloud-aws-messaging/src/main/java/org/springframework/cloud/aws/messaging/listener/SimpleMessageListenerContainer.java#L279
+    ;; reference in https://github.com/cognitect-labs/pedestal.kafka/blob/master/src/com/cognitect/kafka.clj#L43
+    ;; other reference in https://github.com/spring-cloud/spring-cloud-aws/blob/v2.0.0.M4/spring-cloud-aws-messaging/src/main/java/org/springframework/cloud/aws/messaging/listener/SimpleMessageListenerContainer.java#L279
     (doseq [listener listeners]
       (a/go-loop []
         (sqs-start-listener sqs-client listener sqs-configurations)
