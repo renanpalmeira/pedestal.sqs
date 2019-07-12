@@ -1,8 +1,8 @@
 (ns pedestal.sqs.server
-  (:gen-class) ; for -main method in uberjar
+  (:gen-class)                                              ; for -main method in uberjar
   (:require [io.pedestal.http :as server]
             [pedestal.sqs.service :as service]
-            [pedestal.sqs.sqs :as sqs]))
+            [pedestal.sqs.listener :as sqs-listener]))
 
 
 (defn -main
@@ -11,8 +11,8 @@
   (println "\nCreating your server...")
 
   (-> service/service
-      sqs/sqs-server
-      sqs/start
+      sqs-listener/sqs-server
+      sqs-listener/start
       server/create-server
       server/start))
 

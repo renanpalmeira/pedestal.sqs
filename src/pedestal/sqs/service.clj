@@ -39,15 +39,23 @@
 (defn foo-listener
   "listen foo queue"
   [message]
-  (log/info :sqs message)
+  (log/info :sqs-foo message)
   (prn (:Body message)))
 
 
-(defn foo1-listener
-  "listen foo queue"
+(defn bar-listener
+  "listen bar queue"
   [message]
-  (log/info :sqs1 message)
+  (log/info :sqs-bar message)
   (prn (:Body message)))
+
+
+(defn egg-listener
+  "listen wff queue"
+  [message]
+  (log/info :sqs-egg message)
+  (prn (:Body message)))
+
 
 ;; Consumed by pedestal.sqs.server/create-server
 ;; See http/default-interceptors for additional options you can configure
@@ -59,15 +67,17 @@
               ;; ::http/interceptors []
               ::http/routes            routes
 
-              ::sqs/client {:region            "us-east-1"
-                            :endpoint-override {:protocol :http
-                                                :hostname "localhost"
-                                                :port     9324}}
+              ::sqs/client             {:region            "us-east-1"
+                                        :endpoint-override {:protocol :http
+                                                            :hostname "localhost"
+                                                            :port     9324}}
 
-              ::sqs/configurations {:auto-create-queue? false}
+              ::sqs/configurations     {:auto-create-queue? true}
 
-              ::sqs/listeners #{["renan" foo-listener]
-                                ["renan1" foo1-listener]}
+              ;; queue-name   listener function   queue/listener configurations
+              ::sqs/listeners          #{["foo-queue" foo-listener {:WaitTimeSeconds 20}]
+                                         ["bar-queue" bar-listener]
+                                         ["egg-queue" egg-listener {:WaitTimeSeconds 10}]}
 
               ;; Uncomment next line to enable CORS support, add
               ;; string(s) specifying scheme, host and port for
