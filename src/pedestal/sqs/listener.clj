@@ -28,7 +28,7 @@
         messages (:Messages resp)]
     messages))
 
-
+;; Utility listener
 
 (defn sqs-start-listener
   [sqs-client listener queue-configuration]

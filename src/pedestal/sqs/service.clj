@@ -51,7 +51,7 @@
 
 
 (defn egg-listener
-  "listen wff queue"
+  "listen egg queue"
   [message]
   (log/info :sqs-egg message)
   (prn (:Body message)))
@@ -94,16 +94,6 @@
               ;;::http/secure-headers {:content-security-policy-settings {:object-src "'none'"
               ;;                                                          :script-src "'unsafe-inline' 'unsafe-eval' 'strict-dynamic' https: http:"
               ;;                                                          :frame-ancestors "'none'"}}
-
-              ;::topic/topics           [{::topic/name "smoketest" ::topic/parallelism 1}]
-              ;::consumer/configuration {::common/bootstrap.servers         "localhost:9092"
-              ;                          ::common/group.id                  "development"
-              ;                          ::consumer/key.deserializer        consumer/string-deserializer
-              ;                          ::consumer/value.deserializer      consumer/string-deserializer
-              ;                          ::consumer/enable.auto.commit      "true"
-              ;                          ::consumer/auto.commit.interval.ms "1000"
-              ;                          ::consumer/session.timeout.ms      "30000"}
-              ;::consumer/interceptors  [printerceptor]
 
               ;; Root for resource interceptor that is available by default.
               ::http/resource-path     "/public"
