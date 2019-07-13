@@ -27,9 +27,9 @@ FIXME
                             ["bar-queue" bar-listener {:DeletionPolicy :on-success}]
                             ["egg-queue" egg-listener {:WaitTimeSeconds 10}]}
 }
-
 ```
 
+Read more in [https://github.com/RenanPalmeira/pedestal.sqs/blob/master/src/pedestal/sample/service.clj#L74-L91](https://github.com/RenanPalmeira/pedestal.sqs/blob/master/src/pedestal/sample/service.clj#L74-L91)
 
 ## Getting Started
 
