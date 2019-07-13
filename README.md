@@ -23,7 +23,7 @@ FIXME
  ;; Comments about listeners
  ;; reference of :DeletionPolicy https://github.com/spring-cloud/spring-cloud-aws/blob/v2.1.2.RELEASE/spring-cloud-aws-messaging/src/main/java/org/springframework/cloud/aws/messaging/listener/SqsMessageDeletionPolicy.java#L45
  ::sqs/listeners          #{["foo-queue" foo-listener {:WaitTimeSeconds 20
-                                                    :DeletionPolicy :always}]
+                                                       :DeletionPolicy :always}]
                             ["bar-queue" bar-listener {:DeletionPolicy :on-success}]
                             ["egg-queue" egg-listener {:WaitTimeSeconds 10}]}
 }
