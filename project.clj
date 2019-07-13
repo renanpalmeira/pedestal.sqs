@@ -7,6 +7,7 @@
                  [org.clojure/core.async "0.4.500"]
 
                  [io.pedestal/pedestal.service "0.5.7"]
+                 [io.pedestal/pedestal.interceptor "0.5.7"]
 
                  [com.cognitect.aws/api "0.8.345" :exclusions [[org.eclipse.jetty/jetty-util]]]
                  [com.cognitect.aws/endpoints "1.1.11.586"]
@@ -33,5 +34,5 @@
   ;:java-agents [[org.mortbay.jetty.alpn/jetty-alpn-agent "2.0.5"]]
   :profiles {:dev     {:aliases      {"run-dev" ["trampoline" "run" "-m" "pedestal.sqs.server/run-dev"]}
                        :dependencies [[io.pedestal/pedestal.service-tools "0.5.7"]]}
-             :uberjar {:aot [pedestal.sqs.server]}}
-  :main ^{:skip-aot true} pedestal.sqs.server)
+             :uberjar {:aot [pedestal.sample.server]}}
+  :main ^{:skip-aot true} pedestal.sample.server)

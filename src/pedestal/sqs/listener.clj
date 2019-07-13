@@ -1,67 +1,106 @@
 (ns pedestal.sqs.listener
   (:require [clojure.core.async :as a]
-            [cognitect.aws.client.api :as aws]
-            [pedestal.sqs.sqs :as sqs]))
-
-;; Utility AWS
-
-(defn delete-msg [client queue-id receipt-id]
-  (aws/invoke client {:op      :DeleteMessage
-                      :request {:QueueUrl      queue-id
-                                :ReceiptHandle receipt-id}}))
-
-(defn get-id [client queue-name]
-  (let [resp (aws/invoke client {:op      :GetQueueUrl
-                                 :request {:QueueName queue-name}})]
-    (:QueueUrl resp)))
-
-(defn create-queue [client queue-name]
-  (let [resp (aws/invoke client {:op      :CreateQueue
-                                 :request {:QueueName queue-name}})]
-    (:QueueUrl resp)))
-
-(defn- receive-msg
-  [client queue-id opts]
-  (let [resp (aws/invoke client {:op      :ReceiveMessage
-                                 :request (merge opts
-                                                 {:QueueUrl queue-id})})
-        messages (:Messages resp)]
-    messages))
+            [io.pedestal.interceptor :as interceptor]
+            [io.pedestal.log :as log]
+            [io.pedestal.http :as bootstrap]
+            [pedestal.sqs.queue :as queue]
+            [pedestal.sqs.messaging :as messaging]
+            [pedestal.sqs :as sqs]))
 
 ;; Utility listener
 
+(defn clean-service-map-to-queue-fn
+  [service-map]
+  (dissoc service-map [:queue-fn :sqs-client]))
+
+(defn sqs-deletion-policy-always
+  [service-map]
+  (let [{:keys [sqs-client
+                queue-fn
+                queue-id
+                message]} service-map]
+
+    (messaging/delete-message sqs-client queue-id (:ReceiptHandle message))
+    (queue-fn (clean-service-map-to-queue-fn service-map))))
+
+(defn sqs-deletion-policy-on-success
+  [service-map]
+  (let [{:keys [sqs-client
+                queue-fn
+                queue-id
+                message]} service-map]
+
+    (queue-fn (clean-service-map-to-queue-fn service-map))
+    (messaging/delete-message sqs-client queue-id (:ReceiptHandle message))))
+
+(defn sqs-handle-deletion-policy
+  [service-map]
+  (condp = (:deletion-policy service-map)
+    :always (sqs-deletion-policy-always service-map)
+    :on-success (sqs-deletion-policy-on-success service-map)
+    ((:queue-fn service-map) (clean-service-map-to-queue-fn service-map))))
+
 (defn sqs-start-listener
-  [sqs-client listener queue-configuration]
-  (let [queue-name (listener 0)
+  [sqs-client listener service-map]
+  (let [queue-configuration (::sqs/configurations service-map {})
+
+        queue-name (listener 0)
         queue-fn (listener 1)
         listener-configuration (get listener 2 {})
 
-        exist-queue-id (get-id sqs-client queue-name)
+        exist-queue-id (queue/get-queue-id sqs-client queue-name)
 
         queue-id (if (and (:auto-create-queue? queue-configuration) (not exist-queue-id))
-                   (create-queue sqs-client queue-name)
+                   (queue/create-queue sqs-client queue-name)
                    exist-queue-id)
 
-        queue-response (receive-msg sqs-client queue-id listener-configuration)]
+        queue-response (messaging/receive-message sqs-client queue-id listener-configuration)]
 
     (if queue-response
-      (queue-fn (first queue-response))
+      ;; TODO
+      ;; impl interceptors with interceptor.chain/execute
+      ;; reference in https://github.com/cognitect-labs/pedestal.kafka/blob/master/src/com/cognitect/kafka/consumer.clj#L120
+      ;; (interceptor.chain/execute (-> service-map
+      ;;                               (assoc :message (first queue-response)))
+      ;;                             interceptors)
+      (sqs-handle-deletion-policy
+        (-> service-map
+            (assoc :message (first queue-response)
+                   :queue-id queue-id
+                   :deletion-policy (:DeletionPolicy listener-configuration)
+                   :sqs-client sqs-client
+                   :queue-fn queue-fn)))
       nil)))
 
 (defn- starter
   [service-map]
-  (let [sqs-client (aws/client (merge (::sqs/client service-map) {:api :sqs}))
-        sqs-configurations (::sqs/configurations service-map {})
-        listeners (::sqs/listeners service-map)]
+  (let [sqs-client (queue/create-sqs-client (::sqs/client service-map))
+        listeners (::sqs/listeners service-map)
+
+        service-map-with-sqs (-> service-map
+                                 (assoc :sqs/components {:client sqs-client})
+                                 (dissoc service-map ::sqs-start-fn))]
+
+    (log/info :sqs "Starting listener SQS queues")
 
     ;; reference in https://github.com/cognitect-labs/pedestal.kafka/blob/master/src/com/cognitect/kafka.clj#L43
     ;; other reference in https://github.com/spring-cloud/spring-cloud-aws/blob/v2.0.0.M4/spring-cloud-aws-messaging/src/main/java/org/springframework/cloud/aws/messaging/listener/SimpleMessageListenerContainer.java#L279
     (doseq [listener listeners]
+      (log/info :sqs (str "SQS queue register '" (listener 0) "'"))
       (a/go-loop []
-        (sqs-start-listener sqs-client listener sqs-configurations)
+        (sqs-start-listener sqs-client listener service-map-with-sqs)
         (recur)))
 
-    (dissoc service-map ::sqs-start-fn)))
+    (let [bootstrapped-service-map (bootstrap/default-interceptors service-map)
+          default-interceptors (::bootstrap/interceptors bootstrapped-service-map)
+          interceptor-with-sqs {:name  ::sqs-components
+                                :enter (fn [context]
+                                         (assoc-in context [:request :sqs-client] sqs-client))}]
+
+      (assoc
+        bootstrapped-service-map
+        ::bootstrap/interceptors
+        (into default-interceptors [(interceptor/interceptor interceptor-with-sqs)])))))
 
 ;; Core functions
 
@@ -70,4 +109,3 @@
 (defn sqs-server
   [service-map]
   (assoc service-map ::sqs-start-fn starter))
-

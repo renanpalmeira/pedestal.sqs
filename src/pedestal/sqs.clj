@@ -1,7 +1,5 @@
-(ns pedestal.sqs.sqs
-  (:require [clojure.core.async :as a]
-            [clojure.spec.alpha :as s]
-            [cognitect.aws.client.api :as aws]))
+(ns pedestal.sqs
+  (:require [clojure.spec.alpha :as s]))
 
 
 (s/def ::sqs-start-fn fn?)

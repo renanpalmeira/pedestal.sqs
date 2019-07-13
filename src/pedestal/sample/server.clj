@@ -1,9 +1,8 @@
-(ns pedestal.sqs.server
+(ns pedestal.sample.server
   (:gen-class)                                              ; for -main method in uberjar
   (:require [io.pedestal.http :as server]
-            [pedestal.sqs.service :as service]
+            [pedestal.sample.service :as service]
             [pedestal.sqs.listener :as sqs-listener]))
-
 
 (defn -main
   "The entry-point for 'lein run'"
