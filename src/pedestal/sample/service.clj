@@ -71,27 +71,27 @@
               ::http/routes            routes
 
 
-  ;; read more in https://github.com/cognitect-labs/aws-api
-  ::sqs/client             {:region            "us-east-1"
-                            :endpoint-override {:protocol :http
-                                                :hostname "localhost"
-                                                :port     9324}}
+              ;; read more in https://github.com/cognitect-labs/aws-api
+              ::sqs/client             {:region            "us-east-1"
+                                        :endpoint-override {:protocol :http
+                                                            :hostname "localhost"
+                                                            :port     9324}}
 
-  ::sqs/configurations     {:auto-create-queue? true}
+              ::sqs/configurations     {:auto-create-queue? true}
 
-  ;; Arguments
-  ;; queue-name (e.g. foo-queue)
-  ;; listener function (e.g. foo-listener)
-  ;; queue/listener configurations of library and aws-api (here a shortcut to (aws/doc :ReceiveMessage))
-  ;;
-  ;; Comments about listeners
-  ;; reference of ::sqs/deletion-policy https://github.com/spring-cloud/spring-cloud-aws/blob/v2.1.2.RELEASE/spring-cloud-aws-messaging/src/main/java/org/springframework/cloud/aws/messaging/listener/SqsMessageDeletionPolicy.java#L45
-  ::sqs/listeners          #{["foo-queue" foo-listener {:WaitTimeSeconds      20
-                                                        ::sqs/deletion-policy :always
-                                                        ::sqs/response-type   :json}]
-                             ["bar-queue" bar-listener {::sqs/deletion-policy       :on-success
-                                                        ::sqs/response-interceptors [sqs.interceptors/json-parser]}]
-                             ["egg-queue" egg-listener {:WaitTimeSeconds 10}]}
+              ;; Arguments
+              ;; queue-name (e.g. foo-queue)
+              ;; listener function (e.g. foo-listener)
+              ;; queue/listener configurations of library and aws-api (here a shortcut to (aws/doc :ReceiveMessage))
+              ;;
+              ;; Comments about listeners
+              ;; reference of ::sqs/deletion-policy https://github.com/spring-cloud/spring-cloud-aws/blob/v2.1.2.RELEASE/spring-cloud-aws-messaging/src/main/java/org/springframework/cloud/aws/messaging/listener/SqsMessageDeletionPolicy.java#L45
+              ::sqs/listeners          #{["foo-queue" foo-listener {:WaitTimeSeconds      20
+                                                                    ::sqs/deletion-policy :always
+                                                                    ::sqs/response-type   :json}]
+                                         ["bar-queue" bar-listener {::sqs/deletion-policy       :on-success
+                                                                    ::sqs/response-interceptors [sqs.interceptors/json-parser]}]
+                                         ["egg-queue" egg-listener {:WaitTimeSeconds 10}]}
 
               ;; Uncomment next line to enable CORS support, add
               ;; string(s) specifying scheme, host and port for
