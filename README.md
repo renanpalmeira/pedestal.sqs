@@ -31,7 +31,7 @@ FIXME
 }
 ```
 
-Read more in [https://github.com/RenanPalmeira/pedestal.sqs/blob/master/src/pedestal/sample/service.clj#L74-L91](https://github.com/RenanPalmeira/pedestal.sqs/blob/master/src/pedestal/sample/service.clj#L74-L91)
+Read more in [https://github.com/RenanPalmeira/pedestal.sqs/blob/master/src/pedestal/sample/service.clj#L74-L94](https://github.com/RenanPalmeira/pedestal.sqs/blob/master/src/pedestal/sample/service.clj#L74-L94)
 
 ## Getting Started
 
