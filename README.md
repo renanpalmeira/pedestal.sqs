@@ -15,16 +15,18 @@ FIXME
 
  ::sqs/configurations     {:auto-create-queue? true}
 
- ;; Order
+ ;; Arguments
  ;; queue-name (e.g. foo-queue)
  ;; listener function (e.g. foo-listener)
- ;; queue/listener configurations (here a shortcut to (aws/doc :ReceiveMessage))
+ ;; queue/listener configurations of library and aws-api (here a shortcut to (aws/doc :ReceiveMessage))
  ;;
  ;; Comments about listeners
- ;; reference of :DeletionPolicy https://github.com/spring-cloud/spring-cloud-aws/blob/v2.1.2.RELEASE/spring-cloud-aws-messaging/src/main/java/org/springframework/cloud/aws/messaging/listener/SqsMessageDeletionPolicy.java#L45
- ::sqs/listeners          #{["foo-queue" foo-listener {:WaitTimeSeconds 20
-                                                       :DeletionPolicy :always}]
-                            ["bar-queue" bar-listener {:DeletionPolicy :on-success}]
+ ;; reference of ::sqs/deletion-policy https://github.com/spring-cloud/spring-cloud-aws/blob/v2.1.2.RELEASE/spring-cloud-aws-messaging/src/main/java/org/springframework/cloud/aws/messaging/listener/SqsMessageDeletionPolicy.java#L45
+ ::sqs/listeners          #{["foo-queue" foo-listener {:WaitTimeSeconds      20
+                                                       ::sqs/deletion-policy :always
+                                                       ::sqs/response-type   :json}]
+                            ["bar-queue" bar-listener {::sqs/deletion-policy       :on-success
+                                                       ::sqs/response-interceptors [sqs.interceptors/json-parser]}]
                             ["egg-queue" egg-listener {:WaitTimeSeconds 10}]}
 }
 ```

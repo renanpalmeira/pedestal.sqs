@@ -15,6 +15,9 @@
                  [org.clojure/data.json "0.2.6"]
                  [org.clojure/data.xml "0.2.0-alpha6"]
 
+                 [cheshire                         "5.8.1"]
+                 [com.cognitect/transit-clj        "0.8.313"]
+
                  [org.eclipse.jetty/jetty-util "9.4.18.v20190429"]
 
                  ;; Remove this line and uncomment one of the next lines to

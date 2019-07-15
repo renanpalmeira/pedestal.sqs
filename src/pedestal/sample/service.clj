@@ -2,15 +2,16 @@
   (:require [io.pedestal.http :as http]
             [io.pedestal.http.route :as route]
             [io.pedestal.http.body-params :as body-params]
+            [io.pedestal.log :as log]
             [ring.util.response :as ring-resp]
             [pedestal.sqs :as sqs]
             [pedestal.sqs.queue :as queue]
             [pedestal.sqs.messaging :as messaging]
-            [io.pedestal.log :as log]))
+            [pedestal.sqs.interceptors :as sqs.interceptors]))
 
 (defn about-page
   [{:keys [sqs-client]}]
-  (messaging/send-message! sqs-client (queue/get-queue-id sqs-client "bar-queue") "I come from about-page")
+  (messaging/send-message! sqs-client (queue/get-queue-id sqs-client "bar-queue") (messaging/to-json {:a "a"}))
   (ring-resp/response (format "Clojure %s - served from %s"
                               (clojure-version)
                               (route/url-for ::about-page))))
@@ -70,25 +71,27 @@
               ::http/routes            routes
 
 
-              ;; read more in https://github.com/cognitect-labs/aws-api
-              ::sqs/client             {:region            "us-east-1"
-                                        :endpoint-override {:protocol :http
-                                                            :hostname "localhost"
-                                                            :port     9324}}
+  ;; read more in https://github.com/cognitect-labs/aws-api
+  ::sqs/client             {:region            "us-east-1"
+                            :endpoint-override {:protocol :http
+                                                :hostname "localhost"
+                                                :port     9324}}
 
-              ::sqs/configurations     {:auto-create-queue? true}
+  ::sqs/configurations     {:auto-create-queue? true}
 
-              ;; Order
-              ;; queue-name (e.g. foo-queue)
-              ;; listener function (e.g. foo-listener)
-              ;; queue/listener configurations (here a shortcut to (aws/doc :ReceiveMessage))
-              ;;
-              ;; Comments about listeners
-              ;; reference of :DeletionPolicy https://github.com/spring-cloud/spring-cloud-aws/blob/v2.1.2.RELEASE/spring-cloud-aws-messaging/src/main/java/org/springframework/cloud/aws/messaging/listener/SqsMessageDeletionPolicy.java#L45
-              ::sqs/listeners          #{["foo-queue" foo-listener {:WaitTimeSeconds 20
-                                                                    :DeletionPolicy :always}]
-                                         ["bar-queue" bar-listener {:DeletionPolicy :on-success}]
-                                         ["egg-queue" egg-listener {:WaitTimeSeconds 10}]}
+  ;; Arguments
+  ;; queue-name (e.g. foo-queue)
+  ;; listener function (e.g. foo-listener)
+  ;; queue/listener configurations of library and aws-api (here a shortcut to (aws/doc :ReceiveMessage))
+  ;;
+  ;; Comments about listeners
+  ;; reference of ::sqs/deletion-policy https://github.com/spring-cloud/spring-cloud-aws/blob/v2.1.2.RELEASE/spring-cloud-aws-messaging/src/main/java/org/springframework/cloud/aws/messaging/listener/SqsMessageDeletionPolicy.java#L45
+  ::sqs/listeners          #{["foo-queue" foo-listener {:WaitTimeSeconds      20
+                                                        ::sqs/deletion-policy :always
+                                                        ::sqs/response-type   :json}]
+                             ["bar-queue" bar-listener {::sqs/deletion-policy       :on-success
+                                                        ::sqs/response-interceptors [sqs.interceptors/json-parser]}]
+                             ["egg-queue" egg-listener {:WaitTimeSeconds 10}]}
 
               ;; Uncomment next line to enable CORS support, add
               ;; string(s) specifying scheme, host and port for

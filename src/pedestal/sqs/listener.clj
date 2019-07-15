@@ -1,10 +1,12 @@
 (ns pedestal.sqs.listener
   (:require [clojure.core.async :as a]
             [io.pedestal.interceptor :as interceptor]
+            [io.pedestal.interceptor.chain :as interceptor.chain]
             [io.pedestal.log :as log]
             [io.pedestal.http :as bootstrap]
             [pedestal.sqs.queue :as queue]
             [pedestal.sqs.messaging :as messaging]
+            [pedestal.sqs.interceptors :as sqs.interceptors]
             [pedestal.sqs :as sqs]))
 
 ;; Utility listener
@@ -40,6 +42,13 @@
     :on-success (sqs-deletion-policy-on-success service-map)
     ((:queue-fn service-map) (clean-service-map-to-queue-fn service-map))))
 
+(defn sqs-handle-response-type
+  [type]
+  (condp = type
+    :json sqs.interceptors/json-parser
+    sqs.interceptors/default-parser))
+
+;; TODO: remove from here check exist queue or not
 (defn sqs-start-listener
   [sqs-client listener service-map]
   (let [queue-configuration (::sqs/configurations service-map {})
@@ -54,22 +63,23 @@
                    (queue/create-queue sqs-client queue-name)
                    exist-queue-id)
 
-        queue-response (messaging/receive-message sqs-client queue-id listener-configuration)]
+        queue-response (messaging/receive-message sqs-client queue-id listener-configuration)
+
+        queue-response-type (sqs-handle-response-type (::sqs/response-type listener-configuration))
+
+        interceptors (or (::sqs/response-interceptors listener-configuration) [queue-response-type])]
 
     (if queue-response
-      ;; TODO
-      ;; impl interceptors with interceptor.chain/execute
       ;; reference in https://github.com/cognitect-labs/pedestal.kafka/blob/master/src/com/cognitect/kafka/consumer.clj#L120
-      ;; (interceptor.chain/execute (-> service-map
-      ;;                               (assoc :message (first queue-response)))
-      ;;                             interceptors)
       (sqs-handle-deletion-policy
-        (-> service-map
-            (assoc :message (first queue-response)
-                   :queue-id queue-id
-                   :deletion-policy (:DeletionPolicy listener-configuration)
-                   :sqs-client sqs-client
-                   :queue-fn queue-fn)))
+        (interceptor.chain/execute
+          (-> service-map
+              (assoc :message (first queue-response)
+                     :queue-id queue-id
+                     :deletion-policy (::sqs/deletion-policy listener-configuration)
+                     :sqs-client sqs-client
+                     :queue-fn queue-fn))
+          interceptors))
       nil)))
 
 (defn- starter

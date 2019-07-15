@@ -1,5 +1,6 @@
 (ns pedestal.sqs.messaging
-  (:require [cognitect.aws.client.api :as aws]))
+  (:require [cognitect.aws.client.api :as aws]
+            [cheshire.core :as json]))
 
 ;; Utility AWS SQS Messaging queue
 
@@ -18,7 +19,12 @@
     messages))
 
 (defn send-message!
-  [client queue-url message]
-  (aws/invoke client {:op      :SendMessage
-                      :request {:QueueUrl    queue-url
-                                :MessageBody message}}))
+  [client queue-urls message]
+  (doseq [queue-url (if (coll? queue-urls) queue-urls [queue-urls])]
+    (aws/invoke client {:op      :SendMessage
+                        :request {:QueueUrl    queue-url
+                                  :MessageBody message}})))
+
+;; Utility convert clojure to AWS SQS Messaging queue
+
+(def to-json #(json/generate-string %))
