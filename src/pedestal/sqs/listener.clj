@@ -48,23 +48,13 @@
     :json sqs.interceptors/json-parser
     sqs.interceptors/default-parser))
 
-;; TODO: remove from here check exist queue or not
+;; TODO remove queue-id from parameters
 (defn sqs-start-listener
-  [sqs-client listener service-map]
-  (let [queue-configuration (::sqs/configurations service-map {})
-
-        queue-name (listener 0)
-        queue-fn (listener 1)
+  [sqs-client queue-id listener service-map]
+  (let [queue-fn (listener 1)
         listener-configuration (get listener 2 {})
 
-        exist-queue-id (queue/get-queue-id sqs-client queue-name)
-
-        queue-id (if (and (:auto-create-queue? queue-configuration) (not exist-queue-id))
-                   (queue/create-queue sqs-client queue-name)
-                   exist-queue-id)
-
         queue-response (messaging/receive-message sqs-client queue-id listener-configuration)
-
         queue-response-type (sqs-handle-response-type (::sqs/response-type listener-configuration))
 
         interceptors (or (::sqs/response-interceptors listener-configuration) [queue-response-type])]
@@ -87,6 +77,9 @@
   (let [sqs-client (queue/create-sqs-client (::sqs/client service-map))
         listeners (::sqs/listeners service-map)
 
+        queue-configuration (::sqs/configurations service-map {})
+
+
         service-map-with-sqs (-> service-map
                                  (assoc :sqs/components {:client sqs-client})
                                  (dissoc service-map ::sqs-start-fn))]
@@ -96,10 +89,18 @@
     ;; reference in https://github.com/cognitect-labs/pedestal.kafka/blob/master/src/com/cognitect/kafka.clj#L43
     ;; other reference in https://github.com/spring-cloud/spring-cloud-aws/blob/v2.0.0.M4/spring-cloud-aws-messaging/src/main/java/org/springframework/cloud/aws/messaging/listener/SimpleMessageListenerContainer.java#L279
     (doseq [listener listeners]
-      (log/info :sqs (str "SQS queue register '" (listener 0) "'"))
-      (a/go-loop []
-        (sqs-start-listener sqs-client listener service-map-with-sqs)
-        (recur)))
+      (let [queue-name (listener 0)
+
+            exist-queue-id (queue/get-queue-id sqs-client queue-name)
+
+            queue-id (if (and (:auto-create-queue? queue-configuration) (not exist-queue-id))
+                       (queue/create-queue sqs-client queue-name)
+                       exist-queue-id)]
+
+        (log/info :sqs (str "SQS queue register '" queue-name "'"))
+        (a/go-loop []
+          (sqs-start-listener sqs-client queue-id listener service-map-with-sqs)
+          (recur))))
 
     (let [bootstrapped-service-map (bootstrap/default-interceptors service-map)
           default-interceptors (::bootstrap/interceptors bootstrapped-service-map)
