@@ -1,15 +1,27 @@
 (ns pedestal.sqs
-  (:require [clojure.spec.alpha :as s]))
+  (:require [clojure.spec.alpha :as s]
+            [clojure.spec.gen.alpha :as gen]))
 
 
 (s/def ::sqs-start-fn fn?)
+(s/def ::sqs-stop-fn fn?)
 
 (s/def ::client map?)
 (s/def ::configurations map?)
 
-(s/def ::listener (s/cat :queue-name string?
-                         :queue-fn fn?
-                         :queue-configurations map?))
+(defn- gen-queue-fn
+  []
+  (gen/return identity))
+
+(s/def ::queue-fn (s/spec fn?
+                          :gen gen-queue-fn))
+
+(s/def ::listener (s/cat :queue-name (s/and
+                                       string?
+                                       #(not (empty? %))
+                                       #(not (clojure.string/blank? %)))
+                         :queue-fn ::queue-fn
+                         :queue-configurations (s/& map?)))
 
 ;; reference in https://stackoverflow.com/questions/46135111/how-to-check-distinct-id-in-spec-coll-of?answertab=votes#tab-top
 (s/def ::listeners (s/and

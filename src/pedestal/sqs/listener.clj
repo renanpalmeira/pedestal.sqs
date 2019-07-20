@@ -67,6 +67,12 @@
           interceptors))
       nil)))
 
+(defn- stopper
+  [service-map]
+  (let [listeners-loop (:listeners-loop service-map)]
+    (reset! listeners-loop false)
+    service-map))
+
 (defn- starter
   [service-map]
   ;; reference in https://groups.google.com/d/msg/clojure/H9tk04sSTWE/5NF6rAG3CwAJ
@@ -78,9 +84,14 @@
 
         queue-configuration (::sqs/configurations service-map {})
 
-        service-map-with-sqs (-> service-map
-                                 (assoc :sqs-client sqs-client)
-                                 (dissoc ::sqs-start-fn))]
+        ;; inspired by https://github.com/cognitect-labs/pedestal.kafka/blob/master/src/com/cognitect/kafka/consumer.clj#L139
+        listeners-loop (atom false)
+
+        service-map (-> service-map
+                        (assoc :sqs-client sqs-client)
+                        (assoc ::sqs-stop-fn stopper)
+                        (assoc :listeners-loop listeners-loop)
+                        (dissoc ::sqs-start-fn))]
 
     (log/info :sqs "Starting listener SQS queues")
 
@@ -96,12 +107,12 @@
                        exist-queue-id)]
 
         (log/info :sqs (str "SQS queue register '" queue-name "'"))
-        (a/go-loop []
+        (a/go-loop [continue? listeners-loop]
           (sqs-start-listener (-> (assoc listener :queue-id queue-id)
-                                  (#(assoc service-map-with-sqs :queue %))))
-          (recur))))
+                                  (#(assoc service-map :queue %))))
+          (if @continue? (recur continue?)))))
 
-    (let [bootstrapped-service-map (bootstrap/default-interceptors service-map)
+    (let [bootstrapped-service-map (if (::bootstrap/routes service-map) (bootstrap/default-interceptors service-map) service-map)
           default-interceptors (::bootstrap/interceptors bootstrapped-service-map)
           interceptor-with-sqs {:name  ::sqs-components
                                 :enter (fn [context]
@@ -115,6 +126,8 @@
 ;; Core functions
 
 (def start (sqs/service-fn ::sqs-start-fn))
+
+(def stop (sqs/service-fn ::sqs-stop-fn))
 
 (defn sqs-server
   [service-map]
