@@ -39,9 +39,11 @@ Time to be happy , here is just pass name of queue, a listener function to recei
 Follow available queue configurations write by pedestal.sqs
 
 ```
-{::sqs/deletion-policy :on-success ;; options :never, :on-success and :always, default is :never
+{
+ ::sqs/deletion-policy :on-success ;; options :never, :on-success and :always, default is :never
  ::sqs/response-interceptors [sqs.interceptors/json-parser] ;; here we have access a put interceptors to manage received messages
- ::sqs/response-type :json ;; for now only json and string is response-type supported, default is string}
+ ::sqs/response-type :json ;; for now only json and string is response-type supported, default is string
+}
 ```
 
 Another configurations come from [aws-api](https://github.com/cognitect-labs/aws-api), using `(aws/doc client :ReceiveMessage)` we have this configurations
