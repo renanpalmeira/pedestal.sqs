@@ -1,7 +1,11 @@
 
 # pedestal.sqs
 
+[![Clojars Project](https://img.shields.io/clojars/v/pedestal.sqs.svg)](https://clojars.org/pedestal.sqs)
+
 A simple Pedestal interface for AWS SQS.
+
+**Requires Clojure 1.10.*, Java 1.8+ and Servlet 3.1**
 
 ## Usage
 
