@@ -1,9 +1,77 @@
 # pedestal.sqs
 
-FIXME
+A simple Pedestal interface for AWS SQS.
 
+## Usage
 
-## Configuration example
+In your service map is necessary put `::sqs/client` and `::sqs/listeners`  , optional `::sqs/configurations`
+
+### SQS Client
+
+Here is a shortcut to [aws-api](https://github.com/cognitect-labs/aws-api), to use a local sqs server follow [https://github.com/cognitect-labs/aws-api#endpoint-override](https://github.com/cognitect-labs/aws-api#endpoint-override) to configure AWS credentials [https://github.com/cognitect-labs/aws-api#credentials](https://github.com/cognitect-labs/aws-api#credentials)
+
+```
+{
+ ;; read more in https://github.com/cognitect-labs/aws-api
+ ::sqs/client {:region            "us-east-1"
+               :endpoint-override {:protocol :http
+                                   :hostname "localhost"
+                                   :port     9324}}
+}
+```
+
+### SQS Listener
+
+Be happy time, here is just pass name of queue, a function listener to receive messages and configurations of queue (like response type, deletion policy)
+
+```
+{
+ ::sqs/listeners #{["foo-queue" foo-listener {:WaitTimeSeconds      20
+                                              ::sqs/deletion-policy :always
+                                              ::sqs/response-type   :json}]
+                   ["bar-queue" bar-listener {::sqs/deletion-policy       :on-success
+                                              ::sqs/response-interceptors [sqs.interceptors/json-parser]}]
+                   ["egg-queue" egg-listener {:WaitTimeSeconds 10}]}
+}
+```
+
+Follow available queue configurations write by pedestal.sqs
+
+```
+{::sqs/deletion-policy :on-success ;; options :never, :on-success and :always, default is :never
+ ::sqs/response-interceptors [sqs.interceptors/json-parser] ;; here we have access a put interceptors to manage received messages
+ ::sqs/response-type :json ;; for the time being json is only support response-type, default is string}
+```
+
+Another configurations come from [aws-api](https://github.com/cognitect-labs/aws-api), using `(aws/doc client :ReceiveMessage)` we have this configurations
+
+```
+{:AttributeNames [:seq-of string],
+ :MessageAttributeNames [:seq-of string],
+ :MaxNumberOfMessages integer,
+ :VisibilityTimeout integer,
+ :WaitTimeSeconds integer,
+ :ReceiveRequestAttemptId string}
+```
+
+### SQS Listener - Deletion Policy
+
+By default, aws-api don't delete message when pass in for function listener,
+but inspired by [spring aws deletion policy]() pedestal.sqs implement this feature, follow options:
+
+* `:always` when pedestal.sqs receive message before call your function listener , the message is deleted
+* `:on-success` when pedestal.sqs receive message after call your function listener , the message is deleted
+* `:never` your message will never delete by pedestal.sqs
+
+### SQS Global configuration
+
+The library provide configurations to manage all queues, follow options available:
+
+* `:auto-create-queue?` create queue if not found in your startup application, default is false
+
+## Full configuration example
+
+Example of service map
 
 ```
 {
@@ -31,46 +99,18 @@ FIXME
 }
 ```
 
+Example to valid sqs configurations and start sqs listeners
+
+```
+(-> service/service
+    sqs-listener/sqs-server ;; check sqs configurations
+    sqs-listener/start ;; start sqs listeners
+    server/create-server
+    server/start)
+```
+
 Read more in [https://github.com/RenanPalmeira/pedestal.sqs/blob/master/src/pedestal/sample/service.clj#L74-L94](https://github.com/RenanPalmeira/pedestal.sqs/blob/master/src/pedestal/sample/service.clj#L74-L94)
 
-## Getting Started
-
-1. Start the application: `lein run`
-2. Go to [localhost:8080](http://localhost:8080/) to see: `Hello World!`
-3. Read your app's source code at src/pedestal/sqs/service.clj. Explore the docs of functions
-   that define routes and responses.
-4. Run your app's tests with `lein test`. Read the tests at test/pedestal/sqs/service_test.clj.
-5. Learn more! See the [Links section below](#links).
-
-
-## Configuration
-
-To configure logging see config/logback.xml. By default, the app logs to stdout and logs/.
-To learn more about configuring Logback, read its [documentation](http://logback.qos.ch/documentation.html).
-
-
-## Developing your service
-
-1. Start a new REPL: `lein repl`
-2. Start your service in dev-mode: `(def dev-serv (run-dev))`
-3. Connect your editor to the running REPL session.
-   Re-evaluated code will be seen immediately in the service.
-
-### [Docker](https://www.docker.com/) container support
-
-1. Configure your service to accept incoming connections (edit service.clj and add  ::http/host "0.0.0.0" )
-2. Build an uberjar of your service: `lein uberjar`
-3. Build a Docker image: `sudo docker build -t pedestal.sqs .`
-4. Run your Docker image: `docker run -p 8080:8080 pedestal.sqs`
-
-### [OSv](http://osv.io/) unikernel support with [Capstan](http://osv.io/capstan/)
-
-1. Build and run your image: `capstan run -f "8080:8080"`
-
-Once the image it built, it's cached.  To delete the image and build a new one:
-
-1. `capstan rmi pedestal.sqs; capstan build`
-
-
 ## Links
-* [Other Pedestal examples](http://pedestal.io/samples)
+* [pedestal.kafka](https://github.com/cognitect-labs/pedestal.kafka)
+* [cognitect-labs/aws-api](https://github.com/cognitect-labs/aws-api)
