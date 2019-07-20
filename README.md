@@ -1,3 +1,4 @@
+
 # pedestal.sqs
 
 A simple Pedestal interface for AWS SQS.
@@ -22,7 +23,7 @@ Here is a shortcut to [aws-api](https://github.com/cognitect-labs/aws-api), to u
 
 ### SQS Listener
 
-Be happy time, here is just pass name of queue, a function listener to receive messages and configurations of queue (like response type, deletion policy)
+Time to be happy , here is just pass name of queue, a listener function to receive messages and configurations of queue (like response type, deletion policy)
 
 ```
 {
@@ -40,7 +41,7 @@ Follow available queue configurations write by pedestal.sqs
 ```
 {::sqs/deletion-policy :on-success ;; options :never, :on-success and :always, default is :never
  ::sqs/response-interceptors [sqs.interceptors/json-parser] ;; here we have access a put interceptors to manage received messages
- ::sqs/response-type :json ;; for the time being json is only support response-type, default is string}
+ ::sqs/response-type :json ;; for now only json and string is response-type supported, default is string}
 ```
 
 Another configurations come from [aws-api](https://github.com/cognitect-labs/aws-api), using `(aws/doc client :ReceiveMessage)` we have this configurations
@@ -56,11 +57,10 @@ Another configurations come from [aws-api](https://github.com/cognitect-labs/aws
 
 ### SQS Listener - Deletion Policy
 
-By default, aws-api don't delete message when pass in for function listener,
-but inspired by [spring aws deletion policy]() pedestal.sqs implement this feature, follow options:
+By default, aws-api don't delete the messages when pass in for listener function, but inspired by [spring aws deletion policy](https://stackoverflow.com/questions/45710139/spring-cloud-aws-sqs-deletion-policy)  pedestal.sqs implement this feature, follow options:
 
-* `:always` when pedestal.sqs receive message before call your function listener , the message is deleted
-* `:on-success` when pedestal.sqs receive message after call your function listener , the message is deleted
+* `:always` when pedestal.sqs receive message before call your listener function, the message is deleted
+* `:on-success` when pedestal.sqs receive message after call your listener function, the message is deleted
 * `:never` your message will never delete by pedestal.sqs
 
 ### SQS Global configuration
