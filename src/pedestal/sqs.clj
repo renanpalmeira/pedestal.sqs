@@ -6,7 +6,18 @@
 
 (s/def ::client map?)
 (s/def ::configurations map?)
-(s/def ::listeners any?)
+
+(s/def ::listener (s/cat :queue-name string?
+                         :queue-fn fn?
+                         :queue-configurations map?))
+
+;; reference in https://stackoverflow.com/questions/46135111/how-to-check-distinct-id-in-spec-coll-of?answertab=votes#tab-top
+(s/def ::listeners (s/and
+                     (s/coll-of ::listener)
+                     #(if (empty? %) true (apply distinct? (mapv :queue-name %)))))
+
+(s/def ::service-map-in (s/keys :req [::listeners ::client]
+                                :opt [::configurations]))
 
 ;; reference in https://github.com/cognitect-labs/pedestal.kafka/blob/master/src/com/cognitect/kafka.clj#L19
 (defmacro service-fn [k]

@@ -4,7 +4,7 @@
             [io.pedestal.interceptor :as interceptor])
   (:import (java.io PushbackReader StringReader)))
 
-(defn json-parser
+(defn- json-parser
   [value]
   (json/parse-stream (-> value StringReader. PushbackReader.) true))
 
