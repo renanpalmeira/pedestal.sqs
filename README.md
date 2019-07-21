@@ -1,8 +1,8 @@
 
 # pedestal.sqs
 
-[![Clojars Project](https://img.shields.io/clojars/v/pedestal.sqs.svg)](https://clojars.org/pedestal.sqs)
 [![Build Status](https://travis-ci.org/RenanPalmeira/pedestal.sqs.svg?branch=master)](https://travis-ci.org/RenanPalmeira/pedestal.sqs)
+[![Clojars Project](https://img.shields.io/clojars/v/pedestal.sqs.svg)](https://clojars.org/pedestal.sqs)
 
 A simple Pedestal interface for AWS SQS.
 
