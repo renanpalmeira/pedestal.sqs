@@ -1,4 +1,4 @@
-(defproject pedestal.sqs "1.0.0-alpha4"
+(defproject pedestal.sqs "1.0.0-alpha5"
   :description "Pedestal interface for AWS SQS."
   :url "https://github.com/renanpalmeira/pedestal.sqs"
   :license {:name "The MIT License"
@@ -26,6 +26,7 @@
 
                  [org.eclipse.jetty/jetty-util "9.4.18.v20190429"]]
   :min-lein-version "2.0.0"
+  :resource-paths ["config"]
 
   :deploy-repositories [["clojars" {:sign-releases false
                                     :url "https://clojars.org/repo"}]]

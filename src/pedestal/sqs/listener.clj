@@ -1,6 +1,5 @@
 (ns pedestal.sqs.listener
-  (:require [clojure.core.async :as a]
-            [clojure.spec.alpha :as s]
+  (:require [clojure.spec.alpha :as s]
             [io.pedestal.interceptor :as interceptor]
             [io.pedestal.interceptor.chain :as interceptor.chain]
             [io.pedestal.log :as log]
@@ -69,8 +68,10 @@
 
 (defn- stopper
   [service-map]
-  (let [listeners-loop (:listeners-loop service-map)]
-    (reset! listeners-loop false)
+  (let [continue? (:continue? service-map)]
+    (reset! continue? false)
+    (doseq [async-listener (:async-listeners service-map)]
+      (future-cancel async-listener))
     service-map))
 
 (defn- starter
@@ -85,38 +86,47 @@
         queue-configuration (::sqs/configurations service-map {})
 
         ;; inspired by https://github.com/cognitect-labs/pedestal.kafka/blob/master/src/com/cognitect/kafka/consumer.clj#L139
-        listeners-loop (atom true)
+        continue? (atom true)
 
         service-map (-> service-map
                         (assoc :sqs-client sqs-client)
                         (assoc ::sqs-stop-fn stopper)
-                        (assoc :listeners-loop listeners-loop)
-                        (dissoc ::sqs-start-fn))]
+                        (assoc :continue? continue?)
+                        (dissoc ::sqs-start-fn))
+
+        listeners (for [listener listeners]
+                    (let [queue-name (:queue-name listener)
+
+                          exist-queue-id (queue/get-queue-id sqs-client queue-name)
+
+                          queue-id (if (and (:auto-create-queue? queue-configuration) (not exist-queue-id))
+                                     (queue/create-queue sqs-client queue-name)
+                                     exist-queue-id)]
+
+                      (assoc listener :queue-id queue-id)))
+
+        ;; reference in https://github.com/cognitect-labs/pedestal.kafka/blob/master/src/com/cognitect/kafka.clj#L43
+        ;; other reference in https://github.com/spring-cloud/spring-cloud-aws/blob/v2.0.0.M4/spring-cloud-aws-messaging/src/main/java/org/springframework/cloud/aws/messaging/listener/SimpleMessageListenerContainer.java#L279
+        async-listeners (for [listener listeners]
+                          (let [queue-name (:queue-name listener)]
+                            (log/info :sqs (str "SQS queue register '" queue-name "'"))
+                            (future
+                              (while @continue?
+                                (sqs-start-listener (assoc service-map :queue listener))))))
+
+        service-map (assoc service-map :async-listeners async-listeners)]
 
     (log/info :sqs "Starting listener SQS queues")
-
-    ;; reference in https://github.com/cognitect-labs/pedestal.kafka/blob/master/src/com/cognitect/kafka.clj#L43
-    ;; other reference in https://github.com/spring-cloud/spring-cloud-aws/blob/v2.0.0.M4/spring-cloud-aws-messaging/src/main/java/org/springframework/cloud/aws/messaging/listener/SimpleMessageListenerContainer.java#L279
-    (doseq [listener listeners]
-      (let [queue-name (:queue-name listener)
-
-            exist-queue-id (queue/get-queue-id sqs-client queue-name)
-
-            queue-id (if (and (:auto-create-queue? queue-configuration) (not exist-queue-id))
-                       (queue/create-queue sqs-client queue-name)
-                       exist-queue-id)]
-
-        (log/info :sqs (str "SQS queue register '" queue-name "'"))
-        (a/go-loop [continue? listeners-loop]
-          (sqs-start-listener (-> (assoc listener :queue-id queue-id)
-                                  (#(assoc service-map :queue %))))
-          (if @continue? (recur continue?)))))
 
     (let [bootstrapped-service-map (if (::bootstrap/routes service-map) (bootstrap/default-interceptors service-map) service-map)
           default-interceptors (::bootstrap/interceptors bootstrapped-service-map)
           interceptor-with-sqs {:name  ::sqs-components
                                 :enter (fn [context]
-                                         (assoc-in context [:request :sqs-client] sqs-client))}]
+                                         (-> context
+                                             (assoc-in [:request :sqs-client] sqs-client)
+                                             (assoc-in
+                                               [:request :queues]
+                                               (map #(hash-map (:queue-name %) (:queue-id %)) listeners))))}]
 
       (assoc
         bootstrapped-service-map

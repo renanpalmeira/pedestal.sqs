@@ -28,7 +28,7 @@
 (defn- clear-queues-in-fake-sqs
   [client]
   (doseq [queue (get-queues-in-fake-sqs client)]
-    (aws/invoke client {:op :DeleteQueue
+    (aws/invoke client {:op      :DeleteQueue
                         :request {:QueueUrl queue}})))
 
 
@@ -50,8 +50,46 @@
 (deftest receive-a-message-test
   (let [test-queue-service-map (-> test-service-map
                                    (assoc ::sqs/configurations {:auto-create-queue? true})
-                                   (assoc ::sqs/listeners #{["test-queue" fake-listener-test {::sqs/deletion-policy :always
-                                                                                              ::sqs/response-type   :json}]}))]
+                                   (assoc ::sqs/listeners #{["test-queue1" fake-listener-test {::sqs/deletion-policy :always
+                                                                                               ::sqs/response-type   :json}]
+                                                            ["test-queue2" fake-listener-test {::sqs/deletion-policy :always
+                                                                                               ::sqs/response-type   :json}]
+                                                            ["test-queue3" fake-listener-test {::sqs/deletion-policy :always
+                                                                                               ::sqs/response-type   :json}]
+                                                            ["test-queue4" fake-listener-test {::sqs/deletion-policy :always
+                                                                                               ::sqs/response-type   :json}]
+                                                            ["test-queue5" fake-listener-test {::sqs/deletion-policy :always
+                                                                                               ::sqs/response-type   :json}]
+                                                            ["test-queue6" fake-listener-test {::sqs/deletion-policy :always
+                                                                                               ::sqs/response-type   :json}]
+                                                            ["test-queue7" fake-listener-test {::sqs/deletion-policy :always
+                                                                                               ::sqs/response-type   :json}]
+                                                            ["test-queue8" fake-listener-test {::sqs/deletion-policy :always
+                                                                                               ::sqs/response-type   :json}]
+                                                            ["test-queue9" fake-listener-test {::sqs/deletion-policy :always
+                                                                                               ::sqs/response-type   :json}]
+                                                            ["test-queue10" fake-listener-test {::sqs/deletion-policy :always
+                                                                                                ::sqs/response-type   :json}]
+                                                            ["test-queue11" fake-listener-test {::sqs/deletion-policy :always
+                                                                                                ::sqs/response-type   :json}]
+                                                            ["test-queue12" fake-listener-test {::sqs/deletion-policy :always
+                                                                                                ::sqs/response-type   :json}]
+                                                            ["test-queue13" fake-listener-test {::sqs/deletion-policy :always
+                                                                                                ::sqs/response-type   :json}]
+                                                            ["test-queue14" fake-listener-test {::sqs/deletion-policy :always
+                                                                                                ::sqs/response-type   :json}]
+                                                            ["test-queue15" fake-listener-test {::sqs/deletion-policy :always
+                                                                                                ::sqs/response-type   :json}]
+                                                            ["test-queue16" fake-listener-test {::sqs/deletion-policy :always
+                                                                                                ::sqs/response-type   :json}]
+                                                            ["test-queue17" fake-listener-test {::sqs/deletion-policy :always
+                                                                                                ::sqs/response-type   :json}]
+                                                            ["test-queue18" fake-listener-test {::sqs/deletion-policy :always
+                                                                                                ::sqs/response-type   :json}]
+                                                            ["test-queue19" fake-listener-test {::sqs/deletion-policy :always
+                                                                                                ::sqs/response-type   :json}]
+                                                            ["test-queue20" fake-listener-test {::sqs/deletion-policy :always
+                                                                                                ::sqs/response-type   :json}]}))]
 
     (testing "Startup with create test-queue"
       (let [service-map (-> test-queue-service-map
@@ -61,12 +99,12 @@
 
             queues-in-fake-sqs (get-queues-in-fake-sqs (:sqs-client service-map))]
 
-        (is (= 1 (count queues-in-fake-sqs)))))
+        (is (= 20 (count queues-in-fake-sqs)))))
 
     (testing "Publish a json message"
       (messaging/send-message!
         fake-sqs-client
-        (queue/get-queue-id fake-sqs-client "test-queue")
+        (queue/get-queue-id fake-sqs-client "test-queue1")
         (messaging/to-json {:test "test"})))
 
     (testing "Receive a json message"
