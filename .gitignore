@@ -5,6 +5,7 @@ gitignore
 Capstanfile
 com/
 pedestal.sqs.iml
+pom.xml*
 
 # Project related
 

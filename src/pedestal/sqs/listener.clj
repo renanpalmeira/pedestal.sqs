@@ -85,7 +85,7 @@
         queue-configuration (::sqs/configurations service-map {})
 
         ;; inspired by https://github.com/cognitect-labs/pedestal.kafka/blob/master/src/com/cognitect/kafka/consumer.clj#L139
-        listeners-loop (atom false)
+        listeners-loop (atom true)
 
         service-map (-> service-map
                         (assoc :sqs-client sqs-client)

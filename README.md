@@ -23,7 +23,7 @@ Here is a shortcut to [aws-api](https://github.com/cognitect-labs/aws-api), to u
 
 ### SQS Listener
 
-Time to be happy , here is just pass name of queue, a listener function to receive messages and configurations of queue (like response type, deletion policy)
+Time to be happy, here is just pass name of queue, a listener function to receive messages and configurations of queue (like response type, deletion policy)
 
 ```
 {
@@ -34,6 +34,21 @@ Time to be happy , here is just pass name of queue, a listener function to recei
                                               ::sqs/response-interceptors [sqs.interceptors/json-parser]}]
                    ["egg-queue" egg-listener {:WaitTimeSeconds 10}]}
 }
+```
+
+Example listener function
+
+```
+
+(defn foo-listener
+  [{:keys [message]}]
+  (prn message))
+
+;; => {:MessageId "29d942a3-fd85-4f47-bf5d-d966f102364f"
+       :ReceiptHandle "29d942a3-fd85-4f47-bf5d-d966f102364f#60b168b7-3a33-482e-a0e3-a9dd77b679b7"
+       :MD5OfBody "9d822b36a135bc8d94a09b67128cb63b"
+       :Body {:test "test"}}
+
 ```
 
 Follow available queue configurations write by pedestal.sqs
@@ -111,7 +126,7 @@ Example to valid sqs configurations and start sqs listeners
     server/start)
 ```
 
-Read more in [https://github.com/RenanPalmeira/pedestal.sqs/blob/master/src/pedestal/sample/service.clj#L74-L94](https://github.com/RenanPalmeira/pedestal.sqs/blob/master/src/pedestal/sample/service.clj#L74-L94)
+Read more in [https://github.com/RenanPalmeira/basic-pedestal-sqs-example](https://github.com/RenanPalmeira/basic-pedestal-sqs-example)
 
 ## Links
 * [pedestal.kafka](https://github.com/cognitect-labs/pedestal.kafka)

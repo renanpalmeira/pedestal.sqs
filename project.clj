@@ -1,4 +1,4 @@
-(defproject pedestal.sqs "1.0.0-alpha"
+(defproject pedestal.sqs "1.0.0-alpha4"
   :description "Pedestal interface for AWS SQS."
   :url "https://github.com/renanpalmeira/pedestal.sqs"
   :license {:name "The MIT License"
@@ -26,10 +26,16 @@
 
                  [org.eclipse.jetty/jetty-util "9.4.18.v20190429"]]
   :min-lein-version "2.0.0"
-  :resource-paths ["config"]
+
+  :deploy-repositories [["clojars" {:sign-releases false
+                                    :url "https://clojars.org/repo"}]]
 
   :global-vars {*warn-on-reflection* true}
 
+  :main pedestal.sqs
+  :source-paths ["src"]
+
   :profiles {:dev     {:aliases      {"integration-test" ["sqs" "test"]}
                        :plugins      [[lein-sqs "0.1.0"]]
-                       :dependencies [[io.pedestal/pedestal.service-tools "0.5.7"]]}})
+                       :dependencies [[io.pedestal/pedestal.service-tools "0.5.7"]]}
+             :uberjar {:aot :all}})
