@@ -1,0 +1,11 @@
+language: clojure
+lein: lein
+script: lein clean && lein integration-test
+branches:
+  only:
+    - master
+jdk:
+  - oraclejdk8
+  - openjdk9
+  - openjdk10
+  - openjdk11
