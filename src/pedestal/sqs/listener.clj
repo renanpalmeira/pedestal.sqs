@@ -126,7 +126,7 @@
                                              (assoc-in [:request :sqs-client] sqs-client)
                                              (assoc-in
                                                [:request :queues]
-                                               (map #(hash-map (:queue-name %) (:queue-id %)) listeners))))}]
+                                               (into {} (map #(hash-map (:queue-name %) (:queue-id %)) listeners)))))}]
 
       (assoc
         bootstrapped-service-map
