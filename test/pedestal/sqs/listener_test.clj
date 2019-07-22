@@ -21,7 +21,7 @@
                                              :secret-access-key "b"})
                     :endpoint-override    {:protocol :http
                                            :hostname "localhost"
-                                           :port     9324}}
+                                           :port     8084}}
    ::sqs/listeners (gen/generate (s/gen (s/coll-of ::sqs/listener)))})
 
 ;; UTILS
