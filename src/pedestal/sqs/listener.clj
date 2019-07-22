@@ -71,7 +71,8 @@
   [service-map]
   (let [continue? (:continue? service-map)]
     (reset! continue? false)
-    (a/close! (:async-listeners service-map))
+    (doseq [listener (:async-listeners service-map)]
+      (future-cancel listener))
     service-map))
 
 (defn- starter
@@ -111,10 +112,12 @@
 
         ;; reference in https://github.com/cognitect-labs/pedestal.kafka/blob/master/src/com/cognitect/kafka.clj#L43
         ;; other reference in https://github.com/spring-cloud/spring-cloud-aws/blob/v2.0.0.M4/spring-cloud-aws-messaging/src/main/java/org/springframework/cloud/aws/messaging/listener/SimpleMessageListenerContainer.java#L279
-        async-listeners (a/go
-                          (while @continue?
-                            (doseq [listener listeners]
-                              (a/go (if @continue? (sqs-start-listener (assoc service-map :queue listener)))))))
+        async-listeners (for [listener listeners]
+                          (future
+                            (while (and @continue? (:queue-id listener))
+                              (sqs-start-listener (assoc service-map :queue listener)))))
+
+        _ (dorun async-listeners)
 
         service-map (assoc service-map :async-listeners async-listeners)]
 
