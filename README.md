@@ -136,3 +136,4 @@ Read more in [https://github.com/RenanPalmeira/basic-pedestal-sqs-example](https
 ## Links
 * [pedestal.kafka](https://github.com/cognitect-labs/pedestal.kafka)
 * [cognitect-labs/aws-api](https://github.com/cognitect-labs/aws-api)
+* [AWS, meet Clojure - David Chelimsky](https://www.youtube.com/watch?v=ppDtDP0Rntw)
