@@ -131,7 +131,31 @@ Example to valid sqs configurations and start sqs listeners
     server/start)
 ```
 
+### Publish in a queue from pedestal route
+
+If you want publish in a queue from a pedestal route request argument have :sqs-client and :queues (configured in your project, if is a external queue use `(queue/get-queue-id sqs-client "queue-name")`) 
+
+```
+(defn home-page
+  [request]
+  (let [sqs-client (:sqs-client request)
+        queues (:queues request)]
+    (messaging/send-message!
+      sqs-client ;; same client configured by you and used internally of pedestal.sqs
+      (get queues "bar-queue") ;; here a shortcut to queues configured in your project
+      (messaging/to-json {:example "example"}))
+    (ring-resp/response "Hello from pedestal.sqs!")))
+```
+
 Read more in [https://github.com/RenanPalmeira/basic-pedestal-sqs-example](https://github.com/RenanPalmeira/basic-pedestal-sqs-example)
+
+### Namespaces 
+
+* `pedestal.sqs`
+* `pedestal.sqs.listener`
+* `pedestal.sqs.queue`
+* `pedestal.sqs.messaging`
+* `pedestal.sqs.interceptors`
 
 ## Links
 * [pedestal.kafka](https://github.com/cognitect-labs/pedestal.kafka)
