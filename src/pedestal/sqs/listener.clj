@@ -114,7 +114,7 @@
         async-listeners (a/go
                           (while @continue?
                             (doseq [listener listeners]
-                              (sqs-start-listener (assoc service-map :queue listener)))))
+                              (a/go (if @continue? (sqs-start-listener (assoc service-map :queue listener)))))))
 
         service-map (assoc service-map :async-listeners async-listeners)]
 

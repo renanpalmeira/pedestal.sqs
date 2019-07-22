@@ -1,6 +1,5 @@
 (ns pedestal.sqs.messaging
   (:require [cognitect.aws.client.api :as aws]
-            [cognitect.aws.client.api.async :as aws.async]
             [cheshire.core :as json]))
 
 ;; Utility AWS SQS Messaging queue

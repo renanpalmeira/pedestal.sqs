@@ -147,9 +147,8 @@
 
       (is (= 0 (count queues-in-fake-sqs)))))
 
-  (testing "Startup with without set :auto-create-queue?"
+  (testing "Startup with without set configurations"
     (let [service-map (-> test-service-map
-                          (assoc ::sqs/configurations {:auto-startup? false})
                           listener/sqs-server
                           listener/start
                           listener/stop)
