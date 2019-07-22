@@ -6,19 +6,25 @@
             [pedestal.sqs :as sqs]
             [pedestal.sqs.listener :as listener]
             [pedestal.sqs.queue :as queue]
-            [pedestal.sqs.messaging :as messaging]))
+            [pedestal.sqs.messaging :as messaging]
+            [cognitect.aws.retry :as aws.retry]
+            [cognitect.aws.credentials :as credentials]))
 
 ;; SETUP
 
 (def test-service-map
-  {::sqs/client    {:region            "us-east-1"
-                    :endpoint-override {:protocol :http
-                                        :hostname "localhost"
-                                        :port     8084}}
+  {::sqs/client    {:region               "us-east-1"
+                    :backoff              (aws.retry/capped-exponential-backoff 100 20000 0)
+                    :retriable?           (fn [_] false)
+                    :credentials-provider (credentials/basic-credentials-provider
+                                            {:access-key-id     "a"
+                                             :secret-access-key "b"})
+                    :endpoint-override    {:protocol :http
+                                           :hostname "localhost"
+                                           :port     9324}}
    ::sqs/listeners (gen/generate (s/gen (s/coll-of ::sqs/listener)))})
 
 ;; UTILS
-
 (def fake-sqs-client (queue/create-sqs-client (::sqs/client test-service-map)))
 
 (defn- get-queues-in-fake-sqs
@@ -40,7 +46,6 @@
 
 (use-fixtures :each sqs-fake-fixture)
 
-
 ;; TESTS
 
 (defn fake-listener-test
@@ -49,8 +54,9 @@
 
 (deftest receive-a-message-test
   (let [test-queue-service-map (-> test-service-map
-                                   (assoc ::sqs/configurations {:auto-create-queue? true})
-                                   (assoc ::sqs/listeners #{["test-queue1" fake-listener-test {::sqs/deletion-policy :always
+                                   (assoc ::sqs/configurations {:auto-create-queue? true
+                                                                :auto-startup? false})
+                                   (assoc ::sqs/listeners #{["test-queue1" fake-listener-test {::sqs/deletion-policy :never
                                                                                                ::sqs/response-type   :json}]
                                                             ["test-queue2" fake-listener-test {::sqs/deletion-policy :always
                                                                                                ::sqs/response-type   :json}]
@@ -108,15 +114,18 @@
         (messaging/to-json {:test "test"})))
 
     (testing "Receive a json message"
-      (-> test-queue-service-map
-          listener/sqs-server
-          listener/start
-          listener/stop))))
+      (let [server (-> test-queue-service-map
+                       (assoc ::sqs/configurations {:auto-create-queue? true})
+                       listener/sqs-server
+                       listener/start)]
+        (Thread/sleep (* 10 1000)) ;; ugly but necessary to test receive message (see fake-listener-test)
+        (listener/stop server)))))
 
 (deftest listener-with-auto-create-queue-turn-on-test
   (testing "Startup with {:auto-create-queue? true}"
     (let [service-map (-> test-service-map
-                          (assoc ::sqs/configurations {:auto-create-queue? true})
+                          (assoc ::sqs/configurations {:auto-create-queue? true
+                                                       :auto-startup? false})
                           listener/sqs-server
                           listener/start
                           listener/stop)
@@ -128,7 +137,8 @@
 (deftest listener-with-auto-create-queue-turnoff-test
   (testing "Startup with {:auto-create-queue? false}"
     (let [service-map (-> test-service-map
-                          (assoc ::sqs/configurations {:auto-create-queue? false})
+                          (assoc ::sqs/configurations {:auto-create-queue? false
+                                                       :auto-startup? false})
                           listener/sqs-server
                           listener/start
                           listener/stop)
@@ -137,8 +147,9 @@
 
       (is (= 0 (count queues-in-fake-sqs)))))
 
-  (testing "Startup with without set configurations"
+  (testing "Startup with without set :auto-create-queue?"
     (let [service-map (-> test-service-map
+                          (assoc ::sqs/configurations {:auto-startup? false})
                           listener/sqs-server
                           listener/start
                           listener/stop)

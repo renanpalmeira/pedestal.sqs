@@ -1,5 +1,6 @@
 (ns pedestal.sqs.listener
   (:require [clojure.spec.alpha :as s]
+            [clojure.core.async :as a]
             [io.pedestal.interceptor :as interceptor]
             [io.pedestal.interceptor.chain :as interceptor.chain]
             [io.pedestal.log :as log]
@@ -70,8 +71,7 @@
   [service-map]
   (let [continue? (:continue? service-map)]
     (reset! continue? false)
-    (doseq [async-listener (:async-listeners service-map)]
-      (future-cancel async-listener))
+    (a/close! (:async-listeners service-map))
     service-map))
 
 (defn- starter
@@ -86,7 +86,7 @@
         queue-configuration (::sqs/configurations service-map {})
 
         ;; inspired by https://github.com/cognitect-labs/pedestal.kafka/blob/master/src/com/cognitect/kafka/consumer.clj#L139
-        continue? (atom true)
+        continue? (atom (:auto-startup? queue-configuration true))
 
         service-map (-> service-map
                         (assoc :sqs-client sqs-client)
@@ -103,16 +103,18 @@
                                      (queue/create-queue sqs-client queue-name)
                                      exist-queue-id)]
 
+                      (log/info :sqs (str "SQS queue register '" queue-name "'"))
+
                       (assoc listener :queue-id queue-id)))
+
+        _ (dorun listeners)
 
         ;; reference in https://github.com/cognitect-labs/pedestal.kafka/blob/master/src/com/cognitect/kafka.clj#L43
         ;; other reference in https://github.com/spring-cloud/spring-cloud-aws/blob/v2.0.0.M4/spring-cloud-aws-messaging/src/main/java/org/springframework/cloud/aws/messaging/listener/SimpleMessageListenerContainer.java#L279
-        async-listeners (for [listener listeners]
-                          (let [queue-name (:queue-name listener)]
-                            (log/info :sqs (str "SQS queue register '" queue-name "'"))
-                            (future
-                              (while @continue?
-                                (sqs-start-listener (assoc service-map :queue listener))))))
+        async-listeners (a/go
+                          (while @continue?
+                            (doseq [listener listeners]
+                              (sqs-start-listener (assoc service-map :queue listener)))))
 
         service-map (assoc service-map :async-listeners async-listeners)]
 

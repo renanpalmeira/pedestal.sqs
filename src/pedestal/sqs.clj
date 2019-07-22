@@ -22,7 +22,7 @@
                                        #(not (empty? %))
                                        #(not (clojure.string/blank? %)))
                          :queue-fn ::queue-fn
-                         :queue-configurations (s/& map?)))
+                         :queue-configurations map?))
 
 ;; reference in https://stackoverflow.com/questions/46135111/how-to-check-distinct-id-in-spec-coll-of?answertab=votes#tab-top
 (s/def ::listeners (s/and

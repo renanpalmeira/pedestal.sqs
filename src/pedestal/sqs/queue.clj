@@ -1,5 +1,6 @@
 (ns pedestal.sqs.queue
   (:require [cognitect.aws.client.api :as aws]
+            [cognitect.aws.retry :as aws.retry]
             [io.pedestal.log :as log]))
 
 ;; Utility AWS SQS Queue

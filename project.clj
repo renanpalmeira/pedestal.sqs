@@ -16,8 +16,8 @@
                  [javax.servlet/javax.servlet-api "3.1.0"]
 
                  [com.cognitect.aws/api "0.8.345" :exclusions [[org.eclipse.jetty/jetty-util]]]
-                 [com.cognitect.aws/endpoints "1.1.11.586"]
-                 [com.cognitect.aws/sqs "697.2.391.0"]
+                 [com.cognitect.aws/endpoints "1.1.11.592"]
+                 [com.cognitect.aws/sqs "736.2.496.0"]
                  [org.clojure/data.json "0.2.6"]
                  [org.clojure/data.xml "0.2.0-alpha6"]
 
