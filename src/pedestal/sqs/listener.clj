@@ -45,7 +45,9 @@
   [type]
   (condp = type
     :json sqs.interceptors/json-parser
-    sqs.interceptors/default-parser))
+    :transit-json sqs.interceptors/transit-json-parser
+    :transit-msgpack sqs.interceptors/transit-msgpack-parser
+    sqs.interceptors/string-parser))
 
 (defn- sqs-start-listener
   [service-map]

@@ -61,8 +61,8 @@ Follow available queue configurations write by pedestal.sqs
 ```
 {
  ::sqs/deletion-policy :on-success ;; options :never, :on-success and :always, default is :never
- ::sqs/response-interceptors [sqs.interceptors/json-parser] ;; here we have access a put interceptors to manage received messages
- ::sqs/response-type :json ;; for now only json and string is response-type supported, default is string
+ ::sqs/response-interceptors ``[sqs.interceptors/json-parser] ;; here we have access a put interceptors to manage received messages
+ ::sqs/response-type :json ;; built-in :json, :transit-json, :transit-mgspack, default is string
 }
 ```
 
@@ -85,11 +85,33 @@ By default, aws-api don't delete the messages when pass in for listener function
 * `:on-success` when pedestal.sqs receive message after call your listener function, the message is deleted
 * `:never` your message will never delete by pedestal.sqs
 
+### SQS Listener - Built-in Interceptors
+
+pedestal.sqs provides some interceptors that help process messages.
+
+* `pedestal.sqs.interceptors/json-parser`
+* `pedestal.sqs.interceptors/transit-json-value`
+* `pedestal.sqs.interceptors/transit-msgpack-value`
+* `pedestal.sqs.interceptors/string-parser`
+
+A shortcut to built-in interceptors is `::sqs/response-type :json ;; or :transit-json, :transit-mgspack, default is string`
+
+Is something missing?
+
+Use `::sqs/response-interceptors`, just set a list of interceptors
+
+```
+{
+ ::sqs/listeners #{["bar-queue" bar-listener {::sqs/response-interceptors [sqs.interceptors/transit-json-parser]}]
+}
+```
+
 ### SQS Global configuration
 
-The library provide configurations to manage all queues, follow options available:
+This library provide configurations to manage all queues, follow options available:
 
 * `:auto-create-queue?` create queue if not found in your startup application, default is false
+* `:auto-startup?` start listen SQS messages in startup application, default is true
 
 ## Full configuration example
 
@@ -161,3 +183,4 @@ Read more in [https://github.com/RenanPalmeira/basic-pedestal-sqs-example](https
 * [pedestal.kafka](https://github.com/cognitect-labs/pedestal.kafka)
 * [cognitect-labs/aws-api](https://github.com/cognitect-labs/aws-api)
 * [AWS, meet Clojure - David Chelimsky](https://www.youtube.com/watch?v=ppDtDP0Rntw)
+* [common-sqs](https://github.com/99Taxis/common-sqs)
