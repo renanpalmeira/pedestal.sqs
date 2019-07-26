@@ -110,8 +110,6 @@
 
                       (assoc listener :queue-id queue-id)))
 
-        _ (dorun listeners)
-
         ;; reference in https://github.com/cognitect-labs/pedestal.kafka/blob/master/src/com/cognitect/kafka.clj#L43
         ;; other reference in https://github.com/spring-cloud/spring-cloud-aws/blob/v2.0.0.M4/spring-cloud-aws-messaging/src/main/java/org/springframework/cloud/aws/messaging/listener/SimpleMessageListenerContainer.java#L279
         async-listeners (for [listener listeners]
