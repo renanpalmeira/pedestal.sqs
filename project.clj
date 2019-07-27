@@ -36,7 +36,8 @@
   :source-paths ["src"]
 
   :profiles {:dev     {:aliases        {"integration-test" ["sqs" "test"]}
-                       :plugins        [[lein-sqs "0.1.0"]]
+                       :plugins        [[lein-sqs "0.1.0"]
+                                        [jonase/eastwood "0.3.6"]]
                        :resource-paths ["config"]
                        :dependencies   [[io.pedestal/pedestal.service-tools "0.5.7"]]}
              :uberjar {:aot :all}})

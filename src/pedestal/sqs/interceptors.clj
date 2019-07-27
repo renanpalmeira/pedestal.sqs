@@ -6,16 +6,16 @@
   (:import (java.io PushbackReader StringReader ByteArrayInputStream)
            (java.util Base64)))
 
-(defn- json-parser
-  [value]
-  (json/parse-stream (-> value StringReader. PushbackReader.) true))
+(defn- json-parser-value
+  [body]
+  (json/parse-stream (-> body StringReader. PushbackReader.) true))
 
-(defn- transit-json-parser
+(defn- transit-json-parser-value
   [^String body]
   (transit/read (transit/reader (ByteArrayInputStream. (.getBytes body)) :json)))
 
 ;; reference in https://github.com/99Taxis/common-sqs/blob/master/src/main/scala/com/taxis99/amazon/serializers/MsgPack.scala#L35
-(defn- transit-msgpack-parser
+(defn- transit-msgpack-parser-value
   [^String body]
   (-> (.decode (Base64/getDecoder) body)
       (ByteArrayInputStream.)
@@ -30,7 +30,7 @@
              (assoc-in context [:message :Body]
                        (parser-fn ^String (get-in context [:message :Body]))))}))
 
-(def json-parser (parse-message-with json-parser))
-(def transit-json-parser (parse-message-with transit-json-parser))
-(def transit-msgpack-parser (parse-message-with transit-msgpack-parser))
+(def json-parser (parse-message-with json-parser-value))
+(def transit-json-parser (parse-message-with transit-json-parser-value))
+(def transit-msgpack-parser (parse-message-with transit-msgpack-parser-value))
 (def string-parser (parse-message-with str))
