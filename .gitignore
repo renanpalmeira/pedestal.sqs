@@ -6,6 +6,7 @@ Capstanfile
 com/
 pedestal.sqs.iml
 pom.xml*
+.eastwood
 
 # Project related
 

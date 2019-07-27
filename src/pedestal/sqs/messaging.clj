@@ -22,11 +22,22 @@
     messages))
 
 (defn send-message!
-  [client queue-urls message]
-  (doseq [queue-url (if (coll? queue-urls) queue-urls [queue-urls])]
-    (aws/invoke client {:op      :SendMessage
-                        :request {:QueueUrl    queue-url
-                                  :MessageBody message}})))
+  "Send message to a queue or queues.
+
+    client is a aws/client
+
+    queue-urls string or list string of queue urls
+
+    message string
+
+    addons-payload a optional argument to add some attributes in AWS SQS payload"
+  ([client queue-urls message]
+   (send-message! client queue-urls message {}))
+  ([client queue-urls message addons-payload]
+   (doseq [queue-url (if (coll? queue-urls) queue-urls [queue-urls])]
+     (aws/invoke client {:op      :SendMessage
+                         :request (merge addons-payload {:QueueUrl    queue-url
+                                                         :MessageBody message})}))))
 
 ;; Utility convert clojure to AWS SQS Messaging queue
 
@@ -34,8 +45,8 @@
 
 (defn- ^String write-transit
   [^OutputStream stream type body]
-  (let [_    (transit/write (transit/writer stream type) body)
-        ret  (.toString stream)]
+  (let [_ (transit/write (transit/writer stream type) body)
+        ret (.toString stream)]
     (.close stream)
     ret))
 
