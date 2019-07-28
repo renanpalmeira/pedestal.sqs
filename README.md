@@ -171,6 +171,13 @@ If you want publish in a queue from a pedestal route request argument have :sqs-
 
 Read more in [https://github.com/RenanPalmeira/basic-pedestal-sqs-example](https://github.com/RenanPalmeira/basic-pedestal-sqs-example)
 
+The `messaging/send-message!` has the arguments:
+
+* client is a aws/client
+* queue-urls string or list string of queue urls
+* message string
+* addons-payload a optional argument to add some attributes in AWS SQS payload
+
 ### Namespaces 
 
 * `pedestal.sqs`
