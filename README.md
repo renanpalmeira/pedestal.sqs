@@ -16,7 +16,7 @@ In your service map is necessary put `::sqs/client` and `::sqs/listeners`  , opt
 
 Here is a shortcut to [aws-api](https://github.com/cognitect-labs/aws-api), to use a local sqs server follow [https://github.com/cognitect-labs/aws-api#endpoint-override](https://github.com/cognitect-labs/aws-api#endpoint-override) to configure AWS credentials [https://github.com/cognitect-labs/aws-api#credentials](https://github.com/cognitect-labs/aws-api#credentials)
 
-```
+```clojure
 {
  ;; read more in https://github.com/cognitect-labs/aws-api
  ::sqs/client {:region            "us-east-1"
@@ -30,7 +30,7 @@ Here is a shortcut to [aws-api](https://github.com/cognitect-labs/aws-api), to u
 
 Time to be happy, here is just pass name of queue, a listener function to receive messages and configurations of queue (like response type, deletion policy)
 
-```
+```clojure
 {
  ::sqs/listeners #{["foo-queue" foo-listener {:WaitTimeSeconds      20
                                               ::sqs/deletion-policy :always
@@ -43,7 +43,7 @@ Time to be happy, here is just pass name of queue, a listener function to receiv
 
 Example listener function
 
-```
+```clojure
 
 (defn foo-listener
   [{:keys [message]}]
@@ -58,7 +58,7 @@ Example listener function
 
 Follow available queue configurations write by pedestal.sqs
 
-```
+```clojure
 {
  ::sqs/deletion-policy :on-success ;; options :never, :on-success and :always, default is :never
  ::sqs/response-interceptors ``[sqs.interceptors/json-parser] ;; here we have access a put interceptors to manage received messages
@@ -68,7 +68,7 @@ Follow available queue configurations write by pedestal.sqs
 
 Another configurations come from [aws-api](https://github.com/cognitect-labs/aws-api), using `(aws/doc client :ReceiveMessage)` we have this configurations
 
-```
+```clojure
 {:AttributeNames [:seq-of string],
  :MessageAttributeNames [:seq-of string],
  :MaxNumberOfMessages integer,
@@ -100,7 +100,7 @@ Is something missing?
 
 Use `::sqs/response-interceptors`, just set a list of interceptors
 
-```
+```clojure
 {
  ::sqs/listeners #{["bar-queue" bar-listener {::sqs/response-interceptors [sqs.interceptors/transit-json-parser]}]
 }
@@ -117,7 +117,7 @@ This library provide configurations to manage all queues, follow options availab
 
 Example of service map
 
-```
+```clojure
 {
  ;; read more in https://github.com/cognitect-labs/aws-api
  ::sqs/client             {:region            "us-east-1"
@@ -145,7 +145,7 @@ Example of service map
 
 Example to valid sqs configurations and start sqs listeners
 
-```
+```clojure
 (-> service/service
     sqs-listener/sqs-server ;; check sqs configurations
     sqs-listener/start ;; start sqs listeners
@@ -157,7 +157,7 @@ Example to valid sqs configurations and start sqs listeners
 
 If you want publish in a queue from a pedestal route request argument have :sqs-client and :queues (configured in your project, if is a external queue use `(queue/get-queue-id sqs-client "queue-name")`) 
 
-```
+```clojure
 (defn home-page
   [request]
   (let [sqs-client (:sqs-client request)
